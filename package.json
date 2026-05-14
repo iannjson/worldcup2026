@@ -1,0 +1,28 @@
+{
+  "name": "worldcup2026",
+  "version": "1.0.0",
+  "description": "2026 FIFA World Cup Annex C viewer built with Next.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iannjson/worldcup2026.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iannjson/worldcup2026/issues"
+  },
+  "homepage": "https://github.com/iannjson/worldcup2026#readme",
+  "dependencies": {
+    "jsdom": "^29.1.1",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}

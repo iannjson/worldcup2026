@@ -117,7 +117,6 @@
             </table>
         </div>
     </div>
-</div>
 
 <script>
     /**
@@ -198,27 +197,34 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(data.parse.text['*'], "text/html");
                 const rows = doc.querySelectorAll('table.wikitable tr');
-                const expectedDataColumns = 10; // id + advancing groups + 8 host matchups
-                
+
+                // Wikipedia table structure (per row):
+                //   cells[0]      = combination number (id)
+                //   cells[1..12]  = one cell per group A–L in order; empty = eliminated, bold letter = advancing
+                //   cells[13]     = separator column with rowspan=495 (only physically present in row 1, making it 22 cells; all other rows have 21 cells)
+                //   cells[14..21] (row 1, 22 cells) OR cells[13..20] (rows 2–495, 21 cells) = 8 matchup values ("3X" format)
                 rows.forEach(row => {
                     const cells = Array.from(row.querySelectorAll('td, th'));
-                    if (cells.length < expectedDataColumns) return; // Skip headers or malformed rows
+                    if (cells.length < 21) return; // Skip header or malformed rows
 
                     const id = parseInt(cells[0].textContent.trim());
                     if (isNaN(id)) return;
 
-                    // Strip formatting and keep unique A-L group letters.
-                    const advancing = [...new Set(cells[1].textContent.trim().replace(/[^A-L]/g, '').split(''))];
+                    // Groups A-L are at cells[1..12]; a non-empty cell means that group is advancing.
+                    const advancing = [];
+                    for (let g = 0; g < 12; g++) {
+                        const letter = cells[g + 1].textContent.trim();
+                        if (/^[A-L]$/.test(letter)) advancing.push(letter);
+                    }
                     if (advancing.length !== 8) return;
                     const eliminated = this.config.groups.filter(g => !advancing.includes(g));
-                    
-                    // Extract matchup letters from columns 2..9, then validate single A-L outputs.
-                    const matchups = cells.slice(2, 10).map(cell => cell.textContent.trim().replace(/[^A-L]/g, ''));
-                    if (!matchups.every(m => /^[A-L]$/.test(m))) return;
-                    
-                    if (matchups.length === 8) {
-                        this.state.scenarios.push({ id, eliminated, advancing, matchups });
-                    }
+
+                    // Matchup offset: row 1 has an extra separator cell at [13] (rowspan=495).
+                    const offset = cells.length === 22 ? 14 : 13;
+                    const matchups = cells.slice(offset, offset + 8).map(cell => cell.textContent.trim().replace(/^3/, ''));
+                    if (matchups.length !== 8 || !matchups.every(m => /^[A-L]$/.test(m))) return;
+
+                    this.state.scenarios.push({ id, eliminated, advancing, matchups });
                 });
 
                 if (this.state.scenarios.length === 0) throw new Error("No scenarios parsed from HTML");
